@@ -23,14 +23,14 @@ class Roles(commands.Cog):
         role = discord.utils.get(member.guild.roles, id=755660727305633813)
         await member.add_roles(role)
 
-    @commands.Cog.listener()
+    '''@commands.Cog.listener()
     async def on_reaction_add(self, reaction, user):
         role = discord.utils.get(user.guild.roles, id=755660727305633813)
         channel = reaction.message.channel
         print(channel.id)
         if channel.id == 755830287182725282:
             if reaction.emoji == "👍":
-                await user.add_roles(role)
+                await user.add_roles(role)'''
 
 def setup(bot):
     bot.add_cog(Roles(bot))

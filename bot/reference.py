@@ -1,2 +1,3 @@
 BOT_PREFIX = "/"
-BOT_TOKEN = "CsJLqmdIAzdJBdAczfbCLsn45B2JCV1J"
+BOT_TOKEN = "CsJLqmdIAzdJBdAczfbCLsn45B2JCV1J"''
+LOBBY_ROOT = "Lobby"

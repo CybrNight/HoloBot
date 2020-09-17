@@ -15,6 +15,7 @@ class Lobby:
         self.player_list = []
         self.message = ""
         self.control_panel = ""
+        self.role = None
 
     def add_player(self, player):
         self.player_list.append(player)
@@ -27,7 +28,7 @@ class AmongUs(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot
-        self.lobby_list = []
+        self.lobby_list = {}
         self.among_us_role = None
         self.among_us_channel = None
 
@@ -81,9 +82,8 @@ class AmongUs(commands.Cog):
         user = ctx.author
         create_lobby = True
 
-        for lobby in self.lobby_list:
-            if lobby.channel.name == f"{LOBBY_ROOT}{lobby_id}":
-                create_lobby = False
+        if lobby_id in self.lobby_list:
+            create_lobby = False
 
         if not create_lobby:
             await ctx.send(f"**There is already a lobby with this ID. You can join it with /join {lobby_id}**")
@@ -97,8 +97,9 @@ class AmongUs(commands.Cog):
         }
 
         vc = await guild.create_voice_channel(f"{LOBBY_ROOT}{lobby_id}", user_limit=10, overwrites=overwrites)
-        new_lobby = Lobby(lobby_id, vc, ctx.author)
         await vc.edit(position=len(guild.voice_channels))
+
+        new_lobby = Lobby(lobby_id, vc, ctx.author)
         new_lobby.message = await ctx.send(
             f"**{self.among_us_role.mention} {user.mention} has created an Among Us lobby!"
             f"\nReact to join or use /join_lobby {lobby_id}**")
@@ -113,15 +114,17 @@ class AmongUs(commands.Cog):
 
         await new_lobby.control_panel.add_reaction(u"\U0001F4DC")'''
         await new_lobby.message.add_reaction('\u2705')
-        self.lobby_list.append(new_lobby)
+        new_lobby.role = role
+        self.lobby_list.update({lobby_id: new_lobby})
         await self.join_lobby(ctx.author, ctx.message.channel, lobby_id)
 
     @commands.Cog.listener()
     async def on_voice_state_update(self, member, before, after):
         if before.channel is not None and after.channel is None:
-            for lobby in self.lobby_list:
+            for id, lobby in self.lobby_list.items():
                 if member in lobby.player_list:
                     await self.leave_lobby(member, lobby.host, lobby.id)
+                    return
 
     @commands.Cog.listener()
     async def on_reaction_add(self, reaction, user):
@@ -135,12 +138,12 @@ class AmongUs(commands.Cog):
 
     async def join_lobby(self, user, channel, lobby_id):
         in_lobby = False
-        for lobby in self.lobby_list:
-            if user in lobby.player_list:
-                if lobby.id != lobby_id:
-                    await self.leave_lobby(user, channel, lobby.id)
-                else:
-                    in_lobby = True
+        lobby = self.lobby_list[lobby_id]
+        if user in lobby.player_list:
+            if lobby.id != lobby_id:
+                await self.leave_lobby(user, channel, lobby.id)
+            else:
+                in_lobby = True
 
         if in_lobby:
             msg = await channel.send("**You are already in this lobby**")
@@ -150,13 +153,11 @@ class AmongUs(commands.Cog):
 
         joined = False
         joined_lobby = None
-        for lobby in self.lobby_list:
-            if lobby.channel.name == f"{LOBBY_ROOT}{lobby_id}":
-                role = discord.utils.get(user.guild.roles, name=lobby_id)
-                lobby.add_player(user)
-                await user.add_roles(role)
-                joined = True
-                joined_lobby = lobby
+        if lobby.channel.name == f"{LOBBY_ROOT}{lobby_id}":
+            lobby.add_player(user)
+            await user.add_roles(lobby.role)
+            joined = True
+            joined_lobby = lobby
 
         if not joined:
             msg = await channel.send("**There are no lobbies with that ID**")
@@ -170,42 +171,40 @@ class AmongUs(commands.Cog):
                 await msg.delete()
 
     async def leave_lobby(self, user, channel, lobby_id):
-        role = discord.utils.get(user.guild.roles, name=lobby_id)
-        await user.remove_roles(role)
-
-        for lobby in self.lobby_list:
-            if lobby.id == lobby_id:
-                lobby.remove_player(user)
-                if len(lobby.player_list) == 0:
-                    await self.delete_lobby(user, channel, lobby_id)
+        lobby = self.lobby_list[lobby_id]
+        await user.remove_roles(lobby.role)
+        if lobby.id == lobby_id:
+            lobby.remove_player(user)
+            if len(lobby.player_list) == 0:
+                await self.delete_lobby(user, channel, lobby_id)
 
         leave_msg = await channel.send(f"**{user.mention} has left {lobby_id}**")
         await asleep(2.5)
         await leave_msg.delete()
 
     async def delete_lobby(self, user, channel, lobby_id):
-        for lobby in self.lobby_list:
-            if lobby.id == lobby_id and user == lobby.host:
-                role = discord.utils.get(user.guild.roles, name=lobby_id)
-                if role is not None:
-                    self.lobby_list.remove(lobby)
-                    await lobby.channel.delete()
-                    await role.delete()
-                    delete_msg = await channel.send(f"**Deleted lobby {lobby_id}**")
-                    await asleep(2.5)
-                    await delete_msg.delete()
-                else:
-                    msg = await channel.send("**There are no lobbies with that ID**")
-                    await asleep(1)
-                    await msg.delete()
-            elif lobby.id == lobby_id and user != lobby.host:
-                msg = await channel.send(f"**{user.mention} Only the host of a lobby can use this command.**")
+        lobby = self.lobby_list[lobby_id]
+        role = lobby.role
+        if lobby.id == lobby_id and user == lobby.host:
+            if role is not None:
+                self.lobby_list.pop(lobby.id)
+                await lobby.channel.delete()
+                await role.delete()
+                delete_msg = await channel.send(f"**Deleted lobby {lobby_id}**")
                 await asleep(2.5)
-                await msg.delete()
+                await delete_msg.delete()
             else:
-                msg = await channel.send(f"**No channel with this ID to delete**")
-                await asleep(2.5)
+                msg = await channel.send("**There are no lobbies with that ID**")
+                await asleep(1)
                 await msg.delete()
+        elif lobby.id == lobby_id and user != lobby.host:
+            msg = await channel.send(f"**{user.mention} Only the host of a lobby can use this command.**")
+            await asleep(2.5)
+            await msg.delete()
+        else:
+            msg = await channel.send(f"**No channel with this ID to delete**")
+            await asleep(2.5)
+            await msg.delete()
 
     @commands.command(name="join_lobby")
     async def join_lobby_cmd(self, ctx, lobby_id):

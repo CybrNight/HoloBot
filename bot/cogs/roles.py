@@ -37,14 +37,14 @@ class Roles(commands.Cog):
             for approved in self.approved_list:
                 if role_name.lower() in role.name.lower() and role_name.lower() in approved.lower():
                     if role in ctx.author.roles:
-                        msg = await ctx.send(f"**I have stripped {role.name} from {ctx.author.mention}**")
+                        msg = await ctx.send(f"**I have stripped {role.mention} from {ctx.author.mention}**")
                         await ctx.author.remove_roles(role)
                         await asleep(3.5)
                         await msg.delete()
                         return
                     else:
                         await ctx.author.add_roles(role)
-                        msg = await ctx.send(f"**I have bestowed {ctx.author.mention} with {role.name}**")
+                        msg = await ctx.send(f"**I have bestowed {ctx.author.mention} with {role.mention}**")
                         await asleep(3.5)
                         await msg.delete()
                         return

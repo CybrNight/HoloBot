@@ -37,15 +37,29 @@ class Roles(commands.Cog):
             for approved in self.approved_list:
                 if role_name.lower() in role.name.lower() and role_name.lower() \
                         in approved.lower():
-                    if role in ctx.author.roles:
-                        msg = await ctx.send(f"**I have stripped {role.mention} from {ctx.author.mention}**")
-                        await ctx.author.remove_roles(role)
-                        await asleep(3.5)
-                        await msg.delete()
-                        return
-                    else:
-                        await ctx.author.add_roles(role)
-                        msg = await ctx.send(f"**I have bestowed {ctx.author.mention} with {role.mention}**")
+
+                    try:
+                        if role in ctx.author.roles:
+                            await ctx.author.remove_roles(role)
+                            msg = await ctx.send(f"**I have stripped "
+                                                 f"{role.name} from "
+                                                 f"{ctx.author.mention}**")
+                            await asleep(3.5)
+                            await msg.delete()
+                            return
+                        else:
+                            await ctx.author.add_roles(role)
+                            msg = await ctx.send(f"**I have bestowed "
+                                                 f"{ctx.author.mention} with "
+                                                 f"{role.name}**")
+                            await asleep(3.5)
+                            await msg.delete()
+                            return
+                    except Exception as e:
+                        print(e)
+                        msg = await ctx.send(f"**{ctx.author.mention} There is "
+                                           f"no "
+                                       f"role with that name**")
                         await asleep(3.5)
                         await msg.delete()
                         return

@@ -32,10 +32,11 @@ class Roles(commands.Cog):
 
     @commands.command(name="hololive", aliases=['holo'])
     async def hololive(self, ctx, role_name):
-        role_name = role_name.replace('"','')
+        role_name = role_name.replace('"', '')
         for role in self.role_list:
             for approved in self.approved_list:
-                if role_name.lower() in role.name.lower() and role_name.lower() in approved.lower():
+                if role_name.lower() in role.name.lower() and role_name.lower() \
+                        in approved.lower():
                     if role in ctx.author.roles:
                         msg = await ctx.send(f"**I have stripped {role.mention} from {ctx.author.mention}**")
                         await ctx.author.remove_roles(role)

@@ -21,7 +21,6 @@ class Roles(commands.Cog):
     @commands.Cog.listener()
     async def on_ready(self):
         await self.bot.change_presence(
-            activity=discord.Game("Under Maintenance -_-"))
 
         for guild in self.bot.guilds:
             if guild.id == 755658743957684256:

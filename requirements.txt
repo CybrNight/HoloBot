@@ -1,8 +1,7 @@
-discord.py[voice]
+discord.py==1.5.1
 beautifulsoup4
 bs4
 aiohttp
 Pillow
 aiofiles
 imageio
-youtube_dl

@@ -25,8 +25,6 @@ class Roles(commands.Cog):
 
         for guild in self.bot.guilds:
             if guild.id == 755658743957684256:
-                print(guild.members)
-
                 for role in guild.roles:
                     self.role_list.append(role)
 

@@ -1,16 +1,23 @@
 import sys
 import os
 
+import discord
 from discord.ext.commands import Bot
 from bot.reference import *
 from time import sleep
 
-bot = Bot(command_prefix=BOT_PREFIX)
+intents = discord.Intents.all()
+intents.members = True
+intents.presences = True
+intents.bans = True
+
+bot = Bot(command_prefix=BOT_PREFIX, intents=intents)
 bot.remove_command("help")
 cogs_dir = "cogs"
 print(f"Running Python {sys.version}")
 
 cogs = os.listdir(cogs_dir)
+
 
 @bot.event
 async def on_ready():

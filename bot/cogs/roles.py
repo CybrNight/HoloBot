@@ -20,8 +20,6 @@ class Roles(commands.Cog):
 
     @commands.Cog.listener()
     async def on_ready(self):
-        await self.bot.change_presence(
-
         for guild in self.bot.guilds:
             if guild.id == 755658743957684256:
                 for role in guild.roles:
